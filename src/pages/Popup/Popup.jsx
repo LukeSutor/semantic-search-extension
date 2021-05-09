@@ -1,25 +1,28 @@
-import React from 'react';
-import logo from '../../assets/img/logo.svg';
-import Greetings from '../../containers/Greetings/Greetings';
+import React, { useState } from 'react';
 import './Popup.css';
 
 const Popup = () => {
+
+  const [answer, setAnswer] = useState("dummy data")
+
+
+  chrome.tabs.query({ active: true }, function (tabs) {
+    chrome.tabs.sendMessage(tabs[0].id, { method: "getText" }, function (response) {
+      if (response.method == "getText") {
+        console.log(response)
+      }
+    });
+  });
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/pages/Popup/Popup.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React!
-        </a>
-      </header>
+    <div className="popup">
+      <form className="form">
+        <input type="text" className="search" placeholder="Enter question" />
+        <button type="submit" className="submit">Search</button>
+      </form>
+      <hr />
+      <p>hello</p>
+      <p className="answer">{answer}</p>
     </div>
   );
 };
