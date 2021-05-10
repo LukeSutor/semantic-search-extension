@@ -27,7 +27,7 @@ form {
 
 .search:focus {
   outline: none;
-  background-color: #fafafa;
+  box-shadow: 0 0 2px #0036e7;
 }
 
 .submit {

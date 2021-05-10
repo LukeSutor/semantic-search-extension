@@ -2,6 +2,10 @@
   "manifest_version": 3,
   "name": "Semantic Search Extension",
   "options_page": "options.html",
+  "permissions": [
+    "activeTab",
+    "tabs"
+  ],
   "background": {
     "service_worker": "background.bundle.js"
   },
@@ -15,8 +19,6 @@
   "content_scripts": [
     {
       "matches": [
-        "http://*/*",
-        "https://*/*",
         "<all_urls>"
       ],
       "js": [
