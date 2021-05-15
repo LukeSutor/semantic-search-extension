@@ -1,8 +1,28 @@
-.popup {
+.popup-content {
   display: grid;
   place-items: center;
   padding-top: 1em;
   padding-bottom: 1em;
+}
+
+.button-container {
+  display: flex;
+  flex-direction: row;
+}
+
+.button {
+  width: 150px;
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
+  border: none;
+}
+
+.button-active {
+  background-color: #F2F2F2;
+}
+
+.button-inactive {
+  background-color: #dcdcdc;
 }
 
 form {
@@ -17,7 +37,7 @@ form {
   padding-bottom: 0.5em;
   width: calc(250px - 2em);
   border: none;
-  border-radius: 0.75rem;
+  border-radius: 0.5rem;
   margin-bottom: 1em;
 }
 
@@ -38,7 +58,7 @@ form {
   padding-top: 0.5em;
   padding-bottom: 0.5em;
   border: none;
-  border-radius: 0.75em;
+  border-radius: 0.5em;
   margin-bottom: 1em;
 }
 
@@ -61,5 +81,29 @@ hr {
   width: calc(250px - 2em);
   min-height: 5em;
   margin-top: 1em;
-  border-radius: 0.75em;
+  border-radius: 0.5em;
+}
+
+.textarea {
+  padding-left: 1em;
+  padding-right: 1em;
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
+  border-radius: 0.5em;
+  margin-bottom: 1em;
+  border: none;
+  resize: none;
+  font-size: 13px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+  'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+  sans-serif;
+}
+
+.textarea:hover {
+  background-color: #fafafa;
+}
+
+.textarea:focus {
+  outline: none;
+  box-shadow: 0 0 2px #0036e7;
 }
