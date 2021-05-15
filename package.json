@@ -1,11 +1,11 @@
 {
-  "name": "chrome-extension-boilerplate-react",
+  "name": "semantic-search-extension",
   "version": "4.0.1",
-  "description": "A chrome extension boilerplate built with React 17 and Webpack 5",
+  "description": "Scan webpages or manually entered text for the answers you need",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/lxieyang/chrome-extension-boilerplate-react.git"
+    "url": "https://github.com/LukeSutor/semantic-search-extension"
   },
   "scripts": {
     "build": "node utils/build.js",

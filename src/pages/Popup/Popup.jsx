@@ -6,11 +6,13 @@ const Popup = () => {
 
   const [page, setPage] = useState(0)
 
+  const [loading, setLoading] = useState(false)
+
   const [pageText, setPageText] = useState("")
 
   const [question, setQuestion] = useState("")
 
-  const [answer, setAnswer] = useState("nothing yet")
+  const [answer, setAnswer] = useState("")
 
   // Make a request to the content script to fetch the current website's text
   // And set the answer state to that recieved text
@@ -33,6 +35,7 @@ const Popup = () => {
   // Then set the answer to the response
   useEffect(() => {
     if (question !== "") {
+      setLoading(true)
       axios({
         method: 'post',
         url: 'https://api-inference.huggingface.co/models/distilbert-base-uncased-distilled-squad',
@@ -45,6 +48,7 @@ const Popup = () => {
         }
       })
         .then(res => setAnswer(res.data.answer))
+      setLoading(false)
     }
   }, [question])
 
@@ -58,21 +62,34 @@ const Popup = () => {
         {page === 0 ?
           <>
             <form className="form">
-              <input type="text" id="search0" className="search" placeholder="Enter question" />
-              <button type="button" className="submit" onClick={() => setQuestion(document.getElementById("search0").value)}>Search</button>
+              <label for="search0">Type Question</label>
+              <input type="text" id="search0" className="search" />
+              <button type="button" className="submit" 
+              onClick={() => setQuestion(document.getElementById("search0").value)}>{loading ? "Loading..." : "Search"}</button>
             </form>
-            <hr />
-            <p className="answer">{answer}</p>
+            {answer !== "" &&
+              <>
+                <hr />
+                <p className="answer">{answer}</p>
+              </>
+            }
           </>
           :
           <>
             <form className="form">
-              <label>Enter Question</label>
-              <input type="text" id="search1" className="search" placeholder="Enter question" />
-              <textarea id="textarea" className="textarea" rows={4} placeholder="Enter question" />
-              <button type="button" className="submit" onClick={() => setQuestion(document.getElementById("search1").value)}>Search</button>
+              <label for="search1">Type Question</label>
+              <input type="text" id="search1" className="search" />
+              <label for="textarea">Paste Text To Scan</label>
+              <textarea id="textarea" className="textarea" rows={4} />
+              <button type="button" className="submit" 
+              onClick={() => setQuestion(document.getElementById("search1").value)}>{loading ? "Loading..." : "Search"}</button>
             </form>
-            <p className="answer">{answer}</p>
+            {answer !== "" &&
+              <>
+                <hr />
+                <p className="answer">{answer}</p>
+              </>
+            }
           </>}
       </div>
     </>

@@ -1,11 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Semantic Search Extension",
-  "options_page": "options.html",
-  "permissions": [
-    "activeTab",
-    "tabs"
-  ],
+  "permissions": [],
   "background": {
     "service_worker": "background.bundle.js"
   },
@@ -29,7 +25,6 @@
       ]
     }
   ],
-  "devtools_page": "devtools.html",
   "web_accessible_resources": [
     {
       "resources": [
