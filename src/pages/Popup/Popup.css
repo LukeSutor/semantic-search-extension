@@ -19,10 +19,15 @@
 
 .button-active {
   background-color: #F2F2F2;
+  font-weight: 600;
 }
 
 .button-inactive {
   background-color: #dcdcdc;
+}
+
+.button-inactive:hover {
+  background-color: #d3d3d3;
 }
 
 h1 {
@@ -59,13 +64,13 @@ label {
 
 .search:focus {
   outline: none;
-  box-shadow: 0 0 2px #0036e7;
+  box-shadow: 0 0 2px #0ed85b;
 }
 
 .submit {
   color: white;
   font-weight: 600;
-  background-color: #003CFE;
+  background-color: #0ed85b;
   width: 250px;
   padding-top: 0.5em;
   padding-bottom: 0.5em;
@@ -75,7 +80,7 @@ label {
 }
 
 .submit:hover {
-  background-color: #0036e7;
+  background-color: #0dc554;
   cursor: pointer;
 }
 
@@ -117,5 +122,18 @@ hr {
 
 .textarea:focus {
   outline: none;
-  box-shadow: 0 0 2px #0036e7;
+  box-shadow: 0 0 2px #0ed85b;
+}
+
+::placeholder {
+  color: #0ed85b;
+  opacity: 1;
+}
+
+:-ms-input-placeholder {
+  color: #0ed85b;
+}
+
+::-ms-input-placeholder {
+  color: #0ed85b;
 }

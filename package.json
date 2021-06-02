@@ -1,6 +1,6 @@
 {
   "name": "semantic-search-extension",
-  "version": "4.0.1",
+  "version": "1.0.1",
   "description": "Scan webpages or manually entered text for the answers you need",
   "license": "MIT",
   "repository": {

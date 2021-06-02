@@ -25,10 +25,19 @@ const Popup = () => {
       });
   }
 
+  // If after the axios call the answer is still an empty string, 
+  // something went wrong and an answer couldn't be found.
+  function checkAnswer() {
+    if (answer == "") {
+      setAnswer("Sorry, no answer found")
+    }
+  }
+
   // Get the website's text when the popup is loaded
   useEffect(() => {
     getText()
   }, [])
+
 
   // If the question changes (which means the search button was pressed)
   // Make an axios call to the hugging face api and send the question and context
@@ -36,6 +45,7 @@ const Popup = () => {
   useEffect(() => {
     if (question !== "") {
       setLoading(true)
+      setAnswer("")
       axios({
         method: 'post',
         url: 'https://api-inference.huggingface.co/models/distilbert-base-uncased-distilled-squad',
@@ -48,9 +58,44 @@ const Popup = () => {
         }
       })
         .then(res => setAnswer(res.data.answer))
+
       setLoading(false)
+      if (answer == "") {
+        setAnswer("Sorry, no answer found")
+      }
     }
   }, [question])
+
+  function handleSubmit() {
+    setQuestion(page == 0 ? document.getElementById("search0").value : document.getElementById("search1").value)
+
+    if(question == "") {
+      document.getElementById(page == 0 ? "search0" : "search1").placeholder = "Enter question"
+      return
+    } else {
+      document.getElementById(page == 0 ? "search0" : "search1").placeholder = ""
+    }
+
+    setLoading(true)
+    setAnswer("")
+    axios({
+      method: 'post',
+      url: 'https://api-inference.huggingface.co/models/distilbert-base-uncased-distilled-squad',
+      headers: { "Authorization": "Bearer api_zptRKxCtFJYHzwQraLnzCvXeOmRbLYLXNk" },
+      data: {
+        "inputs": {
+          "question": question,
+          "context": page == 0 ? pageText : document.getElementById("textarea").value
+        }
+      }
+    })
+      .then(res => setAnswer(res.data.answer))
+
+    setLoading(false)
+    if (answer == "") {
+      setAnswer("Sorry, no answer found")
+    }
+  }
 
   return (
     <>
@@ -64,8 +109,9 @@ const Popup = () => {
             <form className="form">
               <label for="search0">Type Question</label>
               <input type="text" id="search0" className="search" />
-              <button type="button" className="submit" 
-              onClick={() => setQuestion(document.getElementById("search0").value)}>{loading ? "Loading..." : "Search"}</button>
+              {/* () => setQuestion(document.getElementById("search0").value) */}
+              <button type="button" className="submit"
+                onClick={() => handleSubmit()}>{loading ? "Loading..." : "Search"}</button>
             </form>
             {answer !== "" &&
               <>
@@ -81,8 +127,8 @@ const Popup = () => {
               <input type="text" id="search1" className="search" />
               <label for="textarea">Paste Text To Scan</label>
               <textarea id="textarea" className="textarea" rows={4} />
-              <button type="button" className="submit" 
-              onClick={() => setQuestion(document.getElementById("search1").value)}>{loading ? "Loading..." : "Search"}</button>
+              <button type="button" className="submit"
+                onClick={() => setQuestion(document.getElementById("search1").value)}>{loading ? "Loading..." : "Search"}</button>
             </form>
             {answer !== "" &&
               <>
