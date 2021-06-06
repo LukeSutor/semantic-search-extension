@@ -1,16 +1,46 @@
-.popup-content {
-  display: grid;
-  place-items: center;
-  padding-top: 1em;
-  padding-bottom: 1em;
+.header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  background-color: white;
+}
+
+.logo {
+  width: 1.5em;
+  height: 1.5em;
+  margin-top: 0.5em;
+  margin-bottom: 0.25em;
+  margin-left: 2em;
+  margin-right: 1em;
+}
+
+.settings-button {
+  cursor: pointer;
+}
+
+.settings-svg {
+  width: 1.5em;
+  height: 1.5em;
+  margin-top: 0.5em;
+  margin-bottom: 0.25em;
+  margin-left: 1em;
+  margin-right: 2em;
+}
+
+.header-text {
+  font-size: 1em;
+  line-height: 1em;
 }
 
 .button-container {
   display: flex;
   flex-direction: row;
+  box-shadow: 0 4px 4px -2px rgba(0, 0, 0, 0.2);
+  color: #b3b3b3;
 }
 
 .button {
+  background-color: white;
   width: 150px;
   padding-top: 0.5em;
   padding-bottom: 0.5em;
@@ -18,21 +48,22 @@
 }
 
 .button-active {
-  background-color: #F2F2F2;
   font-weight: 600;
-}
-
-.button-inactive {
-  background-color: #dcdcdc;
+  border-bottom: 2px solid #0ed85b;
 }
 
 .button-inactive:hover {
-  background-color: #d3d3d3;
+  background-color: #fafafa;
 }
 
-h1 {
-  background-color: #dcdcdc;
+
+.popup-content {
+  display: grid;
+  place-items: center;
+  padding-top: 1em;
+  padding-bottom: 1em;
 }
+
 
 form {
   display: flex;
@@ -44,11 +75,12 @@ label {
 }
 
 .search {
+  background-color: white;
   padding-left: 1em;
   padding-right: 1em;
   padding-top: 0.5em;
   padding-bottom: 0.5em;
-  width: calc(250px - 2em);
+  width: calc(250px - 1em);
   border: none;
   border-radius: 0.5rem;
   margin-bottom: 1em;
@@ -68,21 +100,22 @@ label {
 }
 
 .submit {
-  color: white;
+  color: #0ed85b;
   font-weight: 600;
-  background-color: #0ed85b;
-  width: 250px;
+  background-color: white;
+  width: 263px;
   padding-top: 0.5em;
   padding-bottom: 0.5em;
-  border: none;
-  border-radius: 0.5em;
+  border: 2px solid #0ed85b;
+  border-radius: 999px;
   margin-bottom: 1em;
 }
 
 .submit:hover {
-  background-color: #0dc554;
+  background-color: #fafafa;
   cursor: pointer;
 }
+
 
 hr {
   height: 0.1px;
@@ -90,16 +123,18 @@ hr {
   background-color: #AFAFAF;
 }
 
+
 .answer {
   background-color: white;
   padding-left: 1em;
   padding-right: 1em;
   padding-top: 0.5em;
   padding-bottom: 0.5em;
-  width: calc(250px - 2em);
+  width: calc(250px - 1em);
   margin-top: 1em;
   border-radius: 0.5em;
 }
+
 
 .textarea {
   padding-left: 1em;
