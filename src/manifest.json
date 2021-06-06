@@ -2,6 +2,7 @@
   "manifest_version": 3,
   "name": "Semantic Search Extension",
   "permissions": [],
+  "options_page": "options.html",
   "background": {
     "service_worker": "background.bundle.js"
   },

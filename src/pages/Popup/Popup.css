@@ -15,16 +15,16 @@
 }
 
 .settings-button {
+  text-decoration: none;
+  color: #b3b3b3;
   cursor: pointer;
+  font-size: 1.6em;
+  font-weight: 600;
+  margin-right: 1.5em;
 }
 
-.settings-svg {
-  width: 1.5em;
-  height: 1.5em;
-  margin-top: 0.5em;
-  margin-bottom: 0.25em;
-  margin-left: 1em;
-  margin-right: 2em;
+.settings-button:hover {
+  color: #939393;
 }
 
 .header-text {
@@ -63,7 +63,6 @@
   padding-top: 1em;
   padding-bottom: 1em;
 }
-
 
 form {
   display: flex;

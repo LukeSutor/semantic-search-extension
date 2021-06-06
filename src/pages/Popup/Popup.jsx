@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import logo from '../../assets/img/icon-34.png'
-import svg from './settings.svg'
 import axios from 'axios';
 import './Popup.css';
 
@@ -81,8 +80,7 @@ const Popup = () => {
     <>
       <div className="header">
         <img src={logo} alt="" className="logo" />
-        <a className="settings-button">
-          <img src={svg} alt="svg" className="settings-svg" />
+        <a className="settings-button" href="chrome-extension://nhfljbgijklnmmclepalpcikaghkfffe/options.html">?
         </a>
       </div>
       <div className="button-container">
