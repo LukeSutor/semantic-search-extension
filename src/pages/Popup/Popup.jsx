@@ -79,6 +79,7 @@ const Popup = () => {
   }
 
   function textBlockSearch() {
+    // setPageText(document.getElementById("textarea").value)
     if (document.getElementById("search1").value == "") {
       document.getElementById("search1").placeholder = "Enter question"
       return
@@ -99,11 +100,12 @@ const Popup = () => {
     axios({
       method: 'post',
       url: 'https://api-inference.huggingface.co/models/distilbert-base-uncased-distilled-squad',
-      headers: { "Authorization": "Bearer api_zptRKxCtFJYHzwQraLnzCvXeOmRbLYLXNk" },
+      headers: { "Authorization": "Bearer api_wDUcvxhVHQOmltalCUHjHKnOvNecuAREFG" },
       data: {
         "inputs": {
           "question": document.getElementById("search1").value,
           "context": document.getElementById("textarea").value
+          // document.getElementById("textarea").value
         }
       }
     })
