@@ -45,26 +45,65 @@ const Popup = () => {
   //
   // After the call, if the answer is still an empty string, set it to "Sorry, no answer found"
   // because that means an answer wasn't found.
-  function handleSubmit() {
-    setQuestion(page == 0 ? document.getElementById("search0").value : document.getElementById("search1").value)
-
-    if (question == "") {
-      document.getElementById(page == 0 ? "search0" : "search1").placeholder = "Enter question"
+  //
+  // There are different functions to get the answer for each tab, it can be combined into one function
+  // but having two functions makes the code more readable and easy to work with.
+  function tabSearch() {
+    if (document.getElementById("search0").value == "") {
+      document.getElementById("search0").placeholder = "Enter question"
       return
     } else {
-      document.getElementById(page == 0 ? "search0" : "search1").placeholder = ""
+      document.getElementById("search0").placeholder = ""
     }
 
     setLoading(true)
     setAnswer("")
+
     axios({
       method: 'post',
       url: 'https://api-inference.huggingface.co/models/distilbert-base-uncased-distilled-squad',
       headers: { "Authorization": "Bearer api_zptRKxCtFJYHzwQraLnzCvXeOmRbLYLXNk" },
       data: {
         "inputs": {
-          "question": question,
-          "context": page == 0 ? pageText : document.getElementById("textarea").value
+          "question": document.getElementById("search0").value,
+          "context": pageText
+        }
+      }
+    })
+      .then(res => setAnswer(res.data.answer))
+
+    setLoading(false)
+    if (answer == "") {
+      setAnswer("Sorry, no answer found")
+    }
+  }
+
+  function textBlockSearch() {
+    if (document.getElementById("search1").value == "") {
+      document.getElementById("search1").placeholder = "Enter question"
+      return
+    } else {
+      document.getElementById("search1").placeholder = ""
+    }
+
+    if(document.getElementById("textarea").value == "") {
+      document.getElementById("textarea").placeholder = "Enter text to scan"
+      return
+    } else {
+      document.getElementById("textarea").placeholder = ""
+    }
+
+    setLoading(true)
+    setAnswer("")
+
+    axios({
+      method: 'post',
+      url: 'https://api-inference.huggingface.co/models/distilbert-base-uncased-distilled-squad',
+      headers: { "Authorization": "Bearer api_zptRKxCtFJYHzwQraLnzCvXeOmRbLYLXNk" },
+      data: {
+        "inputs": {
+          "question": document.getElementById("search1").value,
+          "context": document.getElementById("textarea").value
         }
       }
     })
@@ -80,7 +119,7 @@ const Popup = () => {
     <>
       <div className="header">
         <img src={logo} alt="" className="logo" />
-        <a className="settings-button" href="chrome-extension://nhfljbgijklnmmclepalpcikaghkfffe/options.html">?
+        <a className="help-button" href="chrome-extension://nhfljbgijklnmmclepalpcikaghkfffe/options.html">?
         </a>
       </div>
       <div className="button-container">
@@ -94,7 +133,7 @@ const Popup = () => {
               <label for="search0">Type Question</label>
               <input type="text" id="search0" className="search" />
               <button type="button" className="submit"
-                onClick={() => handleSubmit()}>{loading ? "Loading..." : "Search"}</button>
+                onClick={() => tabSearch()}>{loading ? "Loading..." : "Search"}</button>
             </form>
             {answer !== "" &&
               <>
@@ -111,7 +150,7 @@ const Popup = () => {
               <label for="textarea">Paste Text To Scan</label>
               <textarea id="textarea" className="textarea" rows={4} />
               <button type="button" className="submit"
-                onClick={() => handleSubmit()}>{loading ? "Loading..." : "Search"}</button>
+                onClick={() => textBlockSearch()}>{loading ? "Loading..." : "Search"}</button>
             </form>
             {answer !== "" &&
               <>

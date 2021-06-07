@@ -1,10 +1,16 @@
 import React from 'react';
+import back from './back.svg'
 import './Options.css'
 
 const Options = () => {
   return (
     <>
-      <h1 className="header">Help</h1>
+      <div className="header">
+        <h1 className="header-text">Help</h1>
+        <a href="chrome-extension://nhfljbgijklnmmclepalpcikaghkfffe/popup.html">
+          <img src={back} className="back" alt="back" />
+        </a>
+      </div>
       <div className="content">
         <h2 className="subheader">How to search</h2>
         <p className="explanation">This extension has two tabs, "Scan Webpage" and "Manually Enter."
@@ -14,9 +20,9 @@ const Options = () => {
         </p>
         <br />
         <h2 className="subheader">How it works</h2>
-        <p className="explanation">This extension makes use of an artificial intelligence model called BERT made by Google 
-        to answer your questions. It uses the <a 
-        href="https://huggingface.co/" rel="noreferrer" target="_blank" className="link">Hugging Face</a> api to utilize the model and process the search queries.
+        <p className="explanation">This extension makes use of an artificial intelligence model called BERT made by Google
+        to answer your questions. It uses the <a
+            href="https://huggingface.co/" rel="noreferrer" target="_blank" className="link">Hugging Face</a> api to utilize the model and process the search queries.
         </p>
         <br />
         <h2 className="subheader">Common Problems</h2>
@@ -24,7 +30,7 @@ const Options = () => {
         much text than it can process on your current tab. To get around this problem, you could instead copy paste a smaller text block for
         the extension to process instead.
         </p>
-        <p className="explanation">If the extension is functioning smoothly, then abruptly stops working, or you navigate to a new page and the extension stops working, 
+        <p className="explanation">If the extension is functioning smoothly, then abruptly stops working, or you navigate to a new page and the extension stops working,
         you may have to refresh your page, letting the extension recapture your current tab's text, before you proceed.</p>
       </div>
     </>

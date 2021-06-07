@@ -14,7 +14,7 @@
   margin-right: 1em;
 }
 
-.settings-button {
+.help-button {
   text-decoration: none;
   color: #b3b3b3;
   cursor: pointer;
@@ -23,7 +23,7 @@
   margin-right: 1.5em;
 }
 
-.settings-button:hover {
+.help-button:hover {
   color: #939393;
 }
 
