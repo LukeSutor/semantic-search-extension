@@ -11,8 +11,6 @@ const Popup = () => {
 
   const [pageText, setPageText] = useState("")
 
-  const [question, setQuestion] = useState("")
-
   const [answer, setAnswer] = useState("")
 
   // Make a request to the content script to fetch the current website's text
@@ -26,18 +24,21 @@ const Popup = () => {
       });
   }
 
-  // If after the axios call the answer is still an empty string, 
-  // something went wrong and an answer couldn't be found.
-  function checkAnswer() {
-    if (answer == "") {
-      setAnswer("Sorry, no answer found")
-    }
-  }
-
   // Get the website's text when the popup is loaded
   useEffect(() => {
     getText()
   }, [])
+
+  // Called after the response has been received from the api
+  // If the answer exists in the response, set the answer to it
+  // Otherwise, set the answer to no answer found
+  function handleResponse(res) {
+    if (res.data.answer) {
+      setAnswer(res.data.answer)
+    } else {
+      setAnswer("Sorry, no answer found")
+    }
+  }
 
 
   // If the search button was pressed make an axios call to the hugging 
@@ -48,7 +49,7 @@ const Popup = () => {
   //
   // There are different functions to get the answer for each tab, it can be combined into one function
   // but having two functions makes the code more readable and easy to work with.
-  function tabSearch() {
+  async function tabSearch() {
     if (document.getElementById("search0").value == "") {
       document.getElementById("search0").placeholder = "Enter question"
       return
@@ -58,28 +59,30 @@ const Popup = () => {
 
     setLoading(true)
     setAnswer("")
+    document.getElementsByClassName("submit")[0].disabled = true;
+    document.getElementsByClassName("submit")[0].style.cursor = "not-allowed"
 
-    axios({
-      method: 'post',
-      url: 'https://api-inference.huggingface.co/models/distilbert-base-uncased-distilled-squad',
-      headers: { "Authorization": "Bearer api_zptRKxCtFJYHzwQraLnzCvXeOmRbLYLXNk" },
+    await axios({
+      method: 'POST',
+      url: 'https://api.nlpcloud.io/v1/roberta-base-squad2/question',
+      headers: { "Authorization": "Token 12535403fad49c32629ea643a5a91c481e767b12" },
       data: {
-        "inputs": {
-          "question": document.getElementById("search0").value,
-          "context": pageText
-        }
+        "question": document.getElementById("search0").value,
+        "context": pageText
       }
     })
-      .then(res => setAnswer(res.data.answer))
+      .then(res => handleResponse(res))
+      .catch(function(err) {
+        console.error(err)
+        setAnswer("Too many requests, please try again in a minute")
+      })
 
+    document.getElementsByClassName("submit")[0].disabled = false;
+    document.getElementsByClassName("submit")[0].style.cursor = "pointer"
     setLoading(false)
-    if (answer == "") {
-      setAnswer("Sorry, no answer found")
-    }
   }
 
-  function textBlockSearch() {
-    // setPageText(document.getElementById("textarea").value)
+  async function textBlockSearch() {
     if (document.getElementById("search1").value == "") {
       document.getElementById("search1").placeholder = "Enter question"
       return
@@ -87,7 +90,7 @@ const Popup = () => {
       document.getElementById("search1").placeholder = ""
     }
 
-    if(document.getElementById("textarea").value == "") {
+    if (document.getElementById("textarea").value == "") {
       document.getElementById("textarea").placeholder = "Enter text to scan"
       return
     } else {
@@ -96,25 +99,27 @@ const Popup = () => {
 
     setLoading(true)
     setAnswer("")
+    document.getElementsByClassName("submit")[0].disabled = true;
+    document.getElementsByClassName("submit")[0].style.cursor = "not-allowed"
 
-    axios({
-      method: 'post',
-      url: 'https://api-inference.huggingface.co/models/distilbert-base-uncased-distilled-squad',
-      headers: { "Authorization": "Bearer api_wDUcvxhVHQOmltalCUHjHKnOvNecuAREFG" },
+    await axios({
+      method: 'POST',
+      url: 'https://api.nlpcloud.io/v1/roberta-base-squad2/question',
+      headers: { "Authorization": "Token 12535403fad49c32629ea643a5a91c481e767b12" },
       data: {
-        "inputs": {
-          "question": document.getElementById("search1").value,
-          "context": document.getElementById("textarea").value
-          // document.getElementById("textarea").value
-        }
+        "question": document.getElementById("search1").value,
+        "context": document.getElementById("textarea").value
       }
     })
-      .then(res => setAnswer(res.data.answer))
+      .then(res => handleResponse(res))
+      .catch(function(err) {
+        console.error(err)
+        setAnswer("Too many requests, please try again in a minute")
+      })
 
+    document.getElementsByClassName("submit")[0].disabled = false;
+    document.getElementsByClassName("submit")[0].style.cursor = "pointer"
     setLoading(false)
-    if (answer == "") {
-      setAnswer("Sorry, no answer found")
-    }
   }
 
   return (
@@ -132,7 +137,7 @@ const Popup = () => {
         {page === 0 ?
           <>
             <form className="form">
-              <label for="search0">Type Question</label>
+              <label for="search0">Question</label>
               <input type="text" id="search0" className="search" />
               <button type="button" className="submit"
                 onClick={() => tabSearch()}>{loading ? "Loading..." : "Search"}</button>
@@ -147,9 +152,9 @@ const Popup = () => {
           :
           <>
             <form className="form">
-              <label for="search1">Type Question</label>
+              <label for="search1">Question</label>
               <input type="text" id="search1" className="search" />
-              <label for="textarea">Paste Text To Scan</label>
+              <label for="textarea">Text To Scan</label>
               <textarea id="textarea" className="textarea" rows={4} />
               <button type="button" className="submit"
                 onClick={() => textBlockSearch()}>{loading ? "Loading..." : "Search"}</button>
