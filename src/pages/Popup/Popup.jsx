@@ -126,7 +126,7 @@ const Popup = () => {
     <>
       <div className="header">
         <img src={logo} alt="" className="logo" />
-        <a className="help-button" href="chrome-extension://nhfljbgijklnmmclepalpcikaghkfffe/options.html">?
+        <a className="help-button" href="chrome-extension://moknadjgghaffcedafbafjfjgnaanalm/options.html">?
         </a>
       </div>
       <div className="button-container">
