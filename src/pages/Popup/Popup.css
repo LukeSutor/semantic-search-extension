@@ -120,6 +120,7 @@ hr {
   height: 0.1px;
   width: 90%;
   background-color: #AFAFAF;
+  margin-bottom: 1em;
 }
 
 
@@ -130,8 +131,13 @@ hr {
   padding-top: 0.5em;
   padding-bottom: 0.5em;
   width: calc(250px - 1em);
-  margin-top: 1em;
+  margin-top: 0em;
   border-radius: 0.5em;
+}
+
+.confidence {
+  color: #808080;
+  font-weight: 600;
 }
 
 

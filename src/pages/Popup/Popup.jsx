@@ -11,7 +11,11 @@ const Popup = () => {
 
   const [pageText, setPageText] = useState("")
 
-  const [answer, setAnswer] = useState("")
+  const [answer1, setAnswer1] = useState("")
+  const [confidence1, setConfidence1] = useState("")
+
+  const [answer2, setAnswer2] = useState("")
+  const [confidence2, setConfidence2] = useState("")
 
   // Make a request to the content script to fetch the current website's text
   // And set the answer state to that recieved text
@@ -35,6 +39,7 @@ const Popup = () => {
   function handleResponse(res) {
     if (res.data.answer) {
       setAnswer(res.data.answer)
+      setConfidence(Math.floor(res.data.score * 10000) / 100)
     } else {
       setAnswer("Sorry, no answer found")
     }
@@ -58,7 +63,7 @@ const Popup = () => {
     }
 
     setLoading(true)
-    setAnswer("")
+    setAnswer1("")
     document.getElementsByClassName("submit")[0].disabled = true;
     document.getElementsByClassName("submit")[0].style.cursor = "not-allowed"
 
@@ -71,10 +76,17 @@ const Popup = () => {
         "context": pageText
       }
     })
-      .then(res => handleResponse(res))
-      .catch(function(err) {
+      .then(function(res) {
+        if (res.data.answer) {
+          setAnswer1(res.data.answer)
+          setConfidence1(Math.floor(res.data.score * 10000) / 100)
+        } else {
+          setAnswer1("Sorry, no answer found")
+        }
+      })
+      .catch(function (err) {
         console.error(err)
-        setAnswer("Too many requests, please try again in a minute")
+        setAnswer1("Too many requests, please try again in a minute")
       })
 
     document.getElementsByClassName("submit")[0].disabled = false;
@@ -98,7 +110,7 @@ const Popup = () => {
     }
 
     setLoading(true)
-    setAnswer("")
+    setAnswer2("")
     document.getElementsByClassName("submit")[0].disabled = true;
     document.getElementsByClassName("submit")[0].style.cursor = "not-allowed"
 
@@ -111,10 +123,17 @@ const Popup = () => {
         "context": document.getElementById("textarea").value
       }
     })
-      .then(res => handleResponse(res))
-      .catch(function(err) {
+      .then(function(res) {
+        if (res.data.answer) {
+          setAnswer2(res.data.answer)
+          setConfidence2(Math.floor(res.data.score * 10000) / 100)
+        } else {
+          setAnswer2("Sorry, no answer found")
+        }
+      })
+      .catch(function (err) {
         console.error(err)
-        setAnswer("Too many requests, please try again in a minute")
+        setAnswer2("Too many requests, please try again in a minute")
       })
 
     document.getElementsByClassName("submit")[0].disabled = false;
@@ -125,7 +144,7 @@ const Popup = () => {
   return (
     <>
       <div className="header">
-        <img src={logo} alt="" className="logo" />
+        <img src={logo} alt="" className="logo" /> Dev Mode
         <a className="help-button" href="chrome-extension://moknadjgghaffcedafbafjfjgnaanalm/options.html">?
         </a>
       </div>
@@ -142,11 +161,12 @@ const Popup = () => {
               <button type="button" className="submit"
                 onClick={() => tabSearch()}>{loading ? "Loading..." : "Search"}</button>
             </form>
-            {answer !== "" &&
-              <>
+            {answer1 !== "" &&
+              <div>
                 <hr />
-                <p className="answer">{answer}</p>
-              </>
+                <label className="confidence">Confidence: {confidence1}%</label>
+                <p className="answer">{answer1}</p>
+              </div>
             }
           </>
           :
@@ -159,11 +179,12 @@ const Popup = () => {
               <button type="button" className="submit"
                 onClick={() => textBlockSearch()}>{loading ? "Loading..." : "Search"}</button>
             </form>
-            {answer !== "" &&
-              <>
+            {answer2 !== "" &&
+              <div>
                 <hr />
-                <p className="answer">{answer}</p>
-              </>
+                <label className="confidence">Confidence: {confidence2}%</label>
+                <p className="answer">{answer2}</p>
+              </div>
             }
           </>}
       </div>
