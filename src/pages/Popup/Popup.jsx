@@ -33,18 +33,6 @@ const Popup = () => {
     getText()
   }, [])
 
-  // Called after the response has been received from the api
-  // If the answer exists in the response, set the answer to it
-  // Otherwise, set the answer to no answer found
-  function handleResponse(res) {
-    if (res.data.answer) {
-      setAnswer(res.data.answer)
-      setConfidence(Math.floor(res.data.score * 10000) / 100)
-    } else {
-      setAnswer("Sorry, no answer found")
-    }
-  }
-
 
   // If the search button was pressed make an axios call to the hugging 
   // face api and send the question and context then set the answer to the response
@@ -76,20 +64,35 @@ const Popup = () => {
         "context": pageText
       }
     })
-      .then(function(res) {
+      .then(function (res) {
         if (res.data.answer) {
           setAnswer1(res.data.answer)
           setConfidence1(Math.floor(res.data.score * 10000) / 100)
+
+          // Highlight the text on the page
+          // Doesn't work, commented out for now
+          // chrome.tabs.query({ active: true, currentWindow: true },
+          //   function (tabs) {
+          //     chrome.tabs.sendMessage(tabs[0].id, { type: "highlight", search: res.data.answer });
+          //   });
         } else {
           setAnswer1("Sorry, no answer found")
         }
       })
       .catch(function (err) {
         console.error(err)
-        setAnswer1("Too many requests, please try again in a minute")
+        if (err.response.status == 502) {
+          setAnswer1("Bad gateway error, please try again later");
+        } else if (err.response.status == 429) {
+          setAnswer1("Too many requests, please try again in a minute");
+        } else {
+          setAnswer1("We're sorry, an error has occured");
+        }
+        setConfidence1(0)
       })
 
-    document.getElementsByClassName("submit")[0].disabled = false;
+
+    document.getElementsByClassName("submit")[0].disabled = false
     document.getElementsByClassName("submit")[0].style.cursor = "pointer"
     setLoading(false)
   }
@@ -123,7 +126,7 @@ const Popup = () => {
         "context": document.getElementById("textarea").value
       }
     })
-      .then(function(res) {
+      .then(function (res) {
         if (res.data.answer) {
           setAnswer2(res.data.answer)
           setConfidence2(Math.floor(res.data.score * 10000) / 100)
@@ -133,7 +136,14 @@ const Popup = () => {
       })
       .catch(function (err) {
         console.error(err)
-        setAnswer2("Too many requests, please try again in a minute")
+        if (err.response.status == 502) {
+          setAnswer2("Bad gateway error, please try again later");
+        } else if (err.response.status == 429) {
+          setAnswer2("Too many requests, please try again in a minute");
+        } else {
+          setAnswer2("We're sorry, an error has occured");
+        }
+        setConfidence2(0)
       })
 
     document.getElementsByClassName("submit")[0].disabled = false;
@@ -144,7 +154,7 @@ const Popup = () => {
   return (
     <>
       <div className="header">
-        <img src={logo} alt="" className="logo" /> Dev Mode
+        <img src={logo} alt="" className="logo" />
         <a className="help-button" href="chrome-extension://moknadjgghaffcedafbafjfjgnaanalm/options.html">?
         </a>
       </div>
@@ -164,7 +174,7 @@ const Popup = () => {
             {answer1 !== "" &&
               <div>
                 <hr />
-                <label className="confidence">Confidence: {confidence1}%</label>
+                <label className="confidence">{confidence1 == 0 ? "" : `Confidence: ${confidence1}%`}</label>
                 <p className="answer">{answer1}</p>
               </div>
             }
@@ -182,7 +192,7 @@ const Popup = () => {
             {answer2 !== "" &&
               <div>
                 <hr />
-                <label className="confidence">Confidence: {confidence2}%</label>
+                <label className="confidence">{confidence2 == 0 ? "" : `Confidence: ${confidence2}%`}</label>
                 <p className="answer">{answer2}</p>
               </div>
             }
