@@ -85,6 +85,8 @@ const Popup = () => {
           setAnswer1("Bad gateway error, please try again later");
         } else if (err.response.status == 429) {
           setAnswer1("Too many requests, please try again in a minute");
+        } else if (err.response.status == 422) {
+          setAnswer1("Please refresh your webpage and try again");
         } else {
           setAnswer1("We're sorry, an error has occured");
         }
@@ -140,6 +142,8 @@ const Popup = () => {
           setAnswer2("Bad gateway error, please try again later");
         } else if (err.response.status == 429) {
           setAnswer2("Too many requests, please try again in a minute");
+        } else if (err.response.status == 422) {
+          setAnswer2("Please refresh your webpage and try again");
         } else {
           setAnswer2("We're sorry, an error has occured");
         }

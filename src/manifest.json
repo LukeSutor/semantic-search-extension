@@ -9,8 +9,8 @@
   "commands": {
     "_execute_browser_action": {
       "suggested_key": {
-        "default": "Ctrl+Shift+9",
-        "mac": "Command+Shift+9"
+        "default": "Ctrl+Shift+F",
+        "mac": "Command+Shift+F"
       }
     }
   },
