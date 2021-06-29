@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import logo from '../../assets/img/icon-34.png'
+import back from './back.svg'
 import axios from 'axios';
 import './Popup.css';
 
@@ -155,19 +156,10 @@ const Popup = () => {
     setLoading(false)
   }
 
-  return (
-    <>
-      <div className="header">
-        <img src={logo} alt="" className="logo" />
-        <a className="help-button" href="chrome-extension://moknadjgghaffcedafbafjfjgnaanalm/options.html">?
-        </a>
-      </div>
-      <div className="button-container">
-        <button className={`button ${page === 0 ? "button-active" : "button-inactive"}`} onClick={() => setPage(0)}>Scan Webpage</button>
-        <button className={`button ${page === 1 ? "button-active" : "button-inactive"}`} onClick={() => setPage(1)}>Manually Enter</button>
-      </div>
-      <div className="popup-content">
-        {page === 0 ?
+  function renderSwitch() {
+    switch (page) {
+      case 0:
+        return (
           <>
             <form className="form">
               <label for="search0">Question</label>
@@ -183,7 +175,10 @@ const Popup = () => {
               </div>
             }
           </>
-          :
+        );
+
+      case 1:
+        return (
           <>
             <form className="form">
               <label for="search1">Question</label>
@@ -200,8 +195,55 @@ const Popup = () => {
                 <p className="answer">{answer2}</p>
               </div>
             }
-          </>}
-      </div>
+          </>
+        );
+
+      default:
+        break;
+    }
+  }
+
+  return (
+    <>
+      {page !== 2 ?
+        <>
+          <div className="header">
+            <img src={logo} alt="" className="logo" />
+            <button type="button" className="help-button" onClick={() => setPage(2)}>?
+            </button>
+          </div>
+          <div className="button-container">
+            <button className={`button ${page === 0 ? "button-active" : "button-inactive"}`} onClick={() => setPage(0)}>Scan Webpage</button>
+            <button className={`button ${page === 1 ? "button-active" : "button-inactive"}`} onClick={() => setPage(1)}>Manually Enter</button>
+          </div>
+          <div className="popup-content">
+            {renderSwitch()}
+          </div>
+        </>
+        :
+        <>
+          <div className="header-help">
+            <h1 className="header-text-help">Help</h1>
+            <button type="button" className="back-button" onClick={() => setPage(0)}>
+              <img src={back} className="back" alt="back" />
+            </button>
+          </div>
+          <div className="content">
+            <h2 className="subheader">How to search</h2>
+            <p className="explanation">This extension has two tabs, "Scan Webpage" and "Manually Enter." To parse the text of your
+              current tab to answer your question, use the "Scan Webpage" tab and simply ask the question you want answered. If you
+              want to parse a specific block of text for an answer, you can use the "Manually Enter" tab, by pasting the text block
+              you want scanned into the "Text to Scan" field, and your question into the "Question" field.</p>
+            <br />
+            <h2 className="subheader">How it works</h2>
+            <p className="explanation">This extension makes use of an artificial intelligence model called RoBERTa made by deepset
+              to answer your questions. It uses the <a
+                href="https://nlpcloud.io/" rel="noreferrer" target="_blank" className="link">nlpcloud</a> api to
+              utilize the model and process the search queries.
+            </p>
+          </div>
+        </>
+      }
     </>
   );
 };
