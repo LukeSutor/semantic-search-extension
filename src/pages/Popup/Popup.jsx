@@ -83,7 +83,7 @@ const Popup = () => {
       .catch(function (err) {
         console.error(err)
         if (err.response.status == 502) {
-          setAnswer1("Bad gateway error, please try again later");
+          setAnswer1("Max word count exceeded, please search smaller text section");
         } else if (err.response.status == 429) {
           setAnswer1("Too many requests, please try again in a minute");
         } else if (err.response.status == 422) {
@@ -140,7 +140,7 @@ const Popup = () => {
       .catch(function (err) {
         console.error(err)
         if (err.response.status == 502) {
-          setAnswer2("Bad gateway error, please try again later");
+          setAnswer2("Max word count exceeded, please search smaller text section");
         } else if (err.response.status == 429) {
           setAnswer2("Too many requests, please try again in a minute");
         } else if (err.response.status == 422) {
@@ -174,6 +174,7 @@ const Popup = () => {
                 <p className="answer">{answer1}</p>
               </div>
             }
+            {/* <p>{pageText}</p> */}
           </>
         );
 
