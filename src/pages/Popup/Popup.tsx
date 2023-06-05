@@ -5,6 +5,8 @@ import back from './back.svg'
 import axios from 'axios';
 import "@pages/popup/Popup.css";
 
+// @ts-nocheck
+
 const Popup = () => {
 
   const [page, setPage] = useState(0)
@@ -14,10 +16,10 @@ const Popup = () => {
   const [pageText, setPageText] = useState("")
 
   const [answer1, setAnswer1] = useState("")
-  const [confidence1, setConfidence1] = useState("")
+  const [confidence1, setConfidence1] = useState(0)
 
   const [answer2, setAnswer2] = useState("")
-  const [confidence2, setConfidence2] = useState("")
+  const [confidence2, setConfidence2] = useState(0)
 
   // Make a request to the content script to fetch the current website's text
   // And set the answer state to that recieved text
@@ -43,17 +45,17 @@ const Popup = () => {
   // There are different functions to get the answer for each tab, it can be combined into one function
   // but having two functions makes the code more readable and easy to work with.
   async function tabSearch() {
-    if (document.getElementById("search0").value == "") {
-      document.getElementById("search0").placeholder = "Enter question"
+    if ((document.getElementById("search0") as HTMLInputElement).value== "") {
+      (document.getElementById("search0") as HTMLInputElement).placeholder = "Enter question"
       return
     } else {
-      document.getElementById("search0").placeholder = ""
+      (document.getElementById("search0") as HTMLInputElement).placeholder = ""
     }
 
     setLoading(true)
-    setAnswer1("")
-    document.getElementsByClassName("submit")[0].disabled = true;
-    document.getElementsByClassName("submit")[0].style.cursor = "not-allowed"
+    setAnswer1("");
+    (document.getElementsByClassName("submit")[0] as HTMLButtonElement).disabled = true;
+    (document.getElementsByClassName("submit")[0] as HTMLButtonElement).style.cursor = "not-allowed"
 
     await axios({
       method: 'POST',
@@ -62,7 +64,7 @@ const Popup = () => {
         "apiKey": keys.apiKey,
         "modelKey": keys.modelKey,
         "modelInputs": {
-          "question": document.getElementById("search0").value,
+          "question": (document.getElementById("search0") as HTMLInputElement).value,
           "text": pageText
         }
       }
@@ -93,33 +95,33 @@ const Popup = () => {
           setAnswer1("We're sorry, an error has occured");
         }
         setConfidence1(0)
-      })
+      });
 
 
-    document.getElementsByClassName("submit")[0].disabled = false
-    document.getElementsByClassName("submit")[0].style.cursor = "pointer"
+    (document.getElementsByClassName("submit")[0] as HTMLButtonElement).disabled = false;
+    (document.getElementsByClassName("submit")[0] as HTMLButtonElement).style.cursor = "pointer"
     setLoading(false)
   }
 
   async function textBlockSearch() {
-    if (document.getElementById("search1").value == "") {
-      document.getElementById("search1").placeholder = "Enter question"
+    if ((document.getElementById("search1") as HTMLInputElement).value == "") {
+      (document.getElementById("search1") as HTMLInputElement).placeholder = "Enter question"
       return
     } else {
-      document.getElementById("search1").placeholder = ""
+      (document.getElementById("search1") as HTMLInputElement).placeholder = ""
     }
 
-    if (document.getElementById("textarea").value == "") {
-      document.getElementById("textarea").placeholder = "Enter text to scan"
+    if ((document.getElementById("textarea") as HTMLInputElement).value == "") {
+      (document.getElementById("textarea") as HTMLInputElement).placeholder = "Enter text to scan"
       return
     } else {
-      document.getElementById("textarea").placeholder = ""
+      (document.getElementById("textarea") as HTMLInputElement).placeholder = ""
     }
 
     setLoading(true)
-    setAnswer2("")
-    document.getElementsByClassName("submit")[0].disabled = true;
-    document.getElementsByClassName("submit")[0].style.cursor = "not-allowed"
+    setAnswer2("");
+    (document.getElementsByClassName("submit")[0] as HTMLButtonElement).disabled = true;
+    (document.getElementsByClassName("submit")[0] as HTMLButtonElement).style.cursor = "not-allowed"
 
     await axios({
       method: 'POST',
@@ -128,8 +130,8 @@ const Popup = () => {
         "apiKey": keys.apiKey,
         "modelKey": keys.modelKey,
         "modelInputs": {
-          "question": document.getElementById("search1").value,
-          "text": document.getElementById("textarea").value
+          "question": (document.getElementById("search1") as HTMLInputElement).value,
+          "text": (document.getElementById("textarea") as HTMLInputElement).value
         }
       }
     })
@@ -152,10 +154,10 @@ const Popup = () => {
           setAnswer2("We're sorry, an error has occured");
         }
         setConfidence2(0)
-      })
+      });
 
-    document.getElementsByClassName("submit")[0].disabled = false;
-    document.getElementsByClassName("submit")[0].style.cursor = "pointer"
+    (document.getElementsByClassName("submit")[0] as HTMLButtonElement).disabled = false;
+    (document.getElementsByClassName("submit")[0] as HTMLButtonElement).style.cursor = "pointer"
     setLoading(false)
   }
 
@@ -166,7 +168,7 @@ const Popup = () => {
         return (
           <>
             <form className="form">
-              <label for="search0">Question</label>
+              <label htmlFor="search0">Question</label>
               <input type="text" id="search0" className="search" />
               <button type="button" className="submit"
                 onClick={() => tabSearch()}>{loading ? "Loading..." : "Search"}</button>
@@ -185,9 +187,9 @@ const Popup = () => {
         return (
           <>
             <form className="form">
-              <label for="search1">Question</label>
+              <label htmlFor="search1">Question</label>
               <input type="text" id="search1" className="search" />
-              <label for="textarea">Text To Scan</label>
+              <label htmlFor="textarea">Text To Scan</label>
               <textarea id="textarea" className="textarea" rows={4} />
               <button type="button" className="submit"
                 onClick={() => textBlockSearch()}>{loading ? "Loading..." : "Search"}</button>
