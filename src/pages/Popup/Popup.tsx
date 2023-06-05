@@ -1,4 +1,5 @@
 import React, { useState, useEffect }  from "react";
+import keys from '../../../keys.json'
 import logo from "@assets/img/icon-34.png";
 import back from './back.svg'
 import axios from 'axios';
@@ -34,11 +35,10 @@ const Popup = () => {
     getText()
   }, [])
 
-    // If the search button was pressed make an axios call to the hugging 
-  // face api and send the question and context then set the answer to the response
+  // If the search button was pressed make an axios call to the banana
+  // dev server with the question and context, then set the answer to the response
   //
   // After the call, if the answer is still an empty string, set it to "Sorry, no answer found"
-  // because that means an answer wasn't found.
   //
   // There are different functions to get the answer for each tab, it can be combined into one function
   // but having two functions makes the code more readable and easy to work with.
@@ -57,17 +57,21 @@ const Popup = () => {
 
     await axios({
       method: 'POST',
-      url: 'https://api.nlpcloud.io/v1/roberta-base-squad2/question',
-      headers: { "Authorization": "Token 12535403fad49c32629ea643a5a91c481e767b12" },
+      url: 'https://api.banana.dev/start/v4',
       data: {
-        "question": document.getElementById("search0").value,
-        "context": pageText
+        "apiKey": keys.apiKey,
+        "modelKey": keys.modelKey,
+        "modelInputs": {
+          "question": document.getElementById("search0").value,
+          "text": pageText
+        }
       }
     })
       .then(function (res) {
-        if (res.data.answer) {
-          setAnswer1(res.data.answer)
-          setConfidence1(Math.floor(res.data.score * 10000) / 100)
+        console.log(res)
+        if (res.data.modelOutputs) {
+          setAnswer1(res.data.modelOutputs[0].output.answer)
+          setConfidence1(Math.floor(res.data.modelOutputs[0].output.score * 10000) / 100)
 
           // Highlight the text on the page
           // Doesn't work, commented out for now
@@ -81,9 +85,7 @@ const Popup = () => {
       })
       .catch(function (err) {
         console.error(err)
-        if (err.response.status == 502) {
-          setAnswer1("Max word count exceeded, please search smaller text section");
-        } else if (err.response.status == 429) {
+        if (err.response.status == 429) {
           setAnswer1("Too many requests, please try again in a minute");
         } else if (err.response.status == 422) {
           setAnswer1("Please refresh your webpage and try again");
@@ -121,26 +123,28 @@ const Popup = () => {
 
     await axios({
       method: 'POST',
-      url: 'https://api.nlpcloud.io/v1/roberta-base-squad2/question',
-      headers: { "Authorization": "Token 12535403fad49c32629ea643a5a91c481e767b12" },
+      url: 'https://api.banana.dev/start/v4',
       data: {
-        "question": document.getElementById("search1").value,
-        "context": document.getElementById("textarea").value
+        "apiKey": keys.apiKey,
+        "modelKey": keys.modelKey,
+        "modelInputs": {
+          "question": document.getElementById("search1").value,
+          "text": document.getElementById("textarea").value
+        }
       }
     })
       .then(function (res) {
-        if (res.data.answer) {
-          setAnswer2(res.data.answer)
-          setConfidence2(Math.floor(res.data.score * 10000) / 100)
+        console.log(res)
+        if (res.data.modelOutputs) {
+          setAnswer2(res.data.modelOutputs[0].output.answer)
+          setConfidence2(Math.floor(res.data.modelOutputs[0].output.score * 10000) / 100)
         } else {
           setAnswer2("Sorry, no answer found")
         }
       })
       .catch(function (err) {
         console.error(err)
-        if (err.response.status == 502) {
-          setAnswer2("Max word count exceeded, please search smaller text section");
-        } else if (err.response.status == 429) {
+        if (err.response.status == 429) {
           setAnswer2("Too many requests, please try again in a minute");
         } else if (err.response.status == 422) {
           setAnswer2("Please refresh your webpage and try again");
@@ -174,7 +178,6 @@ const Popup = () => {
                 <p className="answer">{answer1}</p>
               </div>
             }
-            {/* <p>{pageText}</p> */}
           </>
         );
 
@@ -237,10 +240,10 @@ const Popup = () => {
               you want scanned into the "Text to Scan" field, and your question into the "Question" field.</p>
             <br />
             <h2 className="subheader">How it works</h2>
-            <p className="explanation">This extension makes use of an artificial intelligence model called RoBERTa made by deepset
-              to answer your questions. It uses the <a
-                href="https://nlpcloud.io/" rel="noreferrer" target="_blank" className="link">nlpcloud</a> api to
-              utilize the model and process the search queries.
+            <p className="explanation">This extension makes use of an artificial intelligence model trained
+              to answer  questions based on a given context. It makes use of the <a
+                href="https://www.banana.dev/" rel="noreferrer" target="_blank" className="link">banana.dev</a> api to
+              perform inference on the model and process the search queries.
             </p>
           </div>
         </>
