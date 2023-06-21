@@ -16,10 +16,8 @@ const Popup = () => {
   const [pageText, setPageText] = useState("")
 
   const [answer1, setAnswer1] = useState("")
-  const [confidence1, setConfidence1] = useState(0)
 
   const [answer2, setAnswer2] = useState("")
-  const [confidence2, setConfidence2] = useState(0)
 
   // Make a request to the content script to fetch the current website's text
   // And set the answer state to that recieved text
@@ -44,29 +42,16 @@ const Popup = () => {
   }
 
 
-  // Format the page text into chunks to be passed to the OpenAI API
-  function chunkText(text) {
-    var textLength = text.split(" ").length
-    if (textLength >= 32000) {
-        return ["Too long"]
+  // Returns JSON object with answer related to a specific question query.
+  async function getAnswer(question: string, context: string) {
+    var textLength = context.split(" ").length
+    if (textLength > 10000) {
+      return "Context too long, please shorten it"
     }
-    // Make the word cutoff 10k words or 2k words depending on how long the context is
-    var cutoff = textLength > 6000 ? 10000 : 2000
-    var pairs = []
-    for(var i = 0; i < Math.ceil(textLength / cutoff); i++) {
-        pairs.push(text.split(" ").slice(i * cutoff, (i + 1) * cutoff).join(" "))
-    }
+    var modelName = textLength > 2000 ? "gpt-3.5-turbo-16k" : "gpt-3.5-turbo"
 
-    return pairs
-  }
-
-
-  // Returns JSON object with answer and confidence related to a specific question query.
-  async function fetchAPI(question: string, context: string, sixteenK: boolean) {
-    var modelName = sixteenK ? "gpt-3.5-turbo-16k" : "gpt-3.5-turbo"
     var prompt = createPrompt(question, context)
     var answer = ""
-    var confidence = 0
 
     await axios({
       method: 'POST',
@@ -74,7 +59,7 @@ const Popup = () => {
       data: JSON.stringify({
         "model": modelName,
         "messages": [
-          {"role": "system", "content": "You are a question answering bot. Answer the question based on the context. Keep the answer short. Only respond with the answer, no other words. Respond \"Unsure about answer\" if not sure about the answer. After your answer, give a confidence rating in your answer separated from the answer with a semicolon. For the confidence, only give a single number, don't say the word \"Confidence\"."},
+          {"role": "system", "content": "You are a question answering bot. Answer the question based on the context. Keep the answer short. Only respond with the answer, no other words. Respond \"Unsure about answer\" if not sure about the answer."},
           {"role": "user", "content": prompt}
         ],
         "temperature": 0,
@@ -90,53 +75,30 @@ const Popup = () => {
       }
     })
       .then(function (res) {
-        console.log(res)
         if (res.status == 200) {
-          var response = res.data.choices[0].message.content
-          answer = response.split("; ").slice(0, -1).join("")
-          confidence = parseInt(response.split("; ").slice(-1)[0])
+          answer = res.data.choices[0].message.content
         } else {
           answer = "Unsure about answer"
         }
       })
       .catch(function (err) {
         console.error(err)
-        if (err.response.status == 429) {
-          answer = "Too many requests, please try again in a minute"
+        if (err.response.status == 400) {
+          answer = "Context too long, please shorten it"
         } else if (err.response.status == 401) {
           answer = "Invalid API key, please contact Chrome Extension creator."
+        } else if (err.response.status == 429) {
+          answer = "Too many requests, please try again in a minute"
         } else if (err.response.status == 500) {
           answer = "Internal server error, please try again in a minute."
         } else if (err.response.status == 503) {
           answer = "Servers overloaded, please try again later."
         } else {
-          answer = "We're sorry, an error has occured"
+          answer = "We're sorry, an unexpected error has occured"
         }
-        confidence = 0
       });
 
-      return {"answer": answer, "confidence": confidence}
-  }
-
-  
-  // Chunks text, makes calls, and returns answer to user query in JSON object
-  async function getAnswer(question: string, context: string) {
-    var textChunks = chunkText(context)
-    if (textChunks[0] == "Too long") {
-      return {"answer": "Context too long, please shorten it", "confidence": 0}
-    }
-
-    var topAnswer = {"answer": "", "confidence": -1}
-    var sixteenK = textChunks[0].split(" ").length > 2750
-    for (const chunk of textChunks) {
-      // Get each answer and change the top answer if a better one is found
-      var currentAnswer = await fetchAPI(question, chunk, sixteenK)
-      if (topAnswer.confidence < currentAnswer.confidence) {
-        topAnswer = currentAnswer
-      }
-    }
-
-    return topAnswer
+      return answer
   }
 
 
@@ -161,10 +123,9 @@ const Popup = () => {
     (document.getElementsByClassName("submit")[0] as HTMLButtonElement).style.cursor = "not-allowed"
 
     var question = (document.getElementById("search0") as HTMLInputElement).value
-    var topAnswer = await getAnswer(question, pageText)
+    await getAnswer(question, pageText)
     .then((topAnswer) => {
-      setAnswer1(topAnswer.answer)
-      setConfidence1(topAnswer.confidence)
+      setAnswer1(topAnswer)
     });
 
 
@@ -196,10 +157,9 @@ const Popup = () => {
 
     var question = (document.getElementById("search1") as HTMLInputElement).value
     var text = (document.getElementById("textarea") as HTMLInputElement).value
-    var topAnswer = await getAnswer(question, text)
+    await getAnswer(question, text)
     .then((topAnswer) => {
-      setAnswer2(topAnswer.answer)
-      setConfidence2(topAnswer.confidence)
+      setAnswer2(topAnswer)
     });
 
     (document.getElementsByClassName("submit")[0] as HTMLButtonElement).disabled = false;
@@ -222,7 +182,6 @@ const Popup = () => {
             {answer1 !== "" &&
               <div>
                 <hr />
-                <label className="confidence">{confidence1 == 0 ? "" : `Confidence: ${confidence1}%`}</label>
                 <p className="answer">{answer1}</p>
               </div>
             }
@@ -243,7 +202,6 @@ const Popup = () => {
             {answer2 !== "" &&
               <div>
                 <hr />
-                <label className="confidence">{confidence2 == 0 ? "" : `Confidence: ${confidence2}%`}</label>
                 <p className="answer">{answer2}</p>
               </div>
             }
