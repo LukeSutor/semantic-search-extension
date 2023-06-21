@@ -37,7 +37,110 @@ const Popup = () => {
     getText()
   }, [])
 
-  // If the search button was pressed make an axios call to the banana
+  // Given a question and context, create text to be used in a 
+  // request to the OpenAI servers for question answering
+  function createPrompt(question: string, text: string) {
+    return "Context: " + text + "\n\nQuestion: " + question
+  }
+
+
+  // Format the page text into chunks to be passed to the OpenAI API
+  function chunkText(text) {
+    var textLength = text.split(" ").length
+    if (textLength >= 32000) {
+        return ["Too long"]
+    }
+    // Make the word cutoff 10k words or 2k words depending on how long the context is
+    var cutoff = textLength > 6000 ? 10000 : 2000
+    var pairs = []
+    for(var i = 0; i < Math.ceil(textLength / cutoff); i++) {
+        pairs.push(text.split(" ").slice(i * cutoff, (i + 1) * cutoff).join(" "))
+    }
+
+    return pairs
+  }
+
+
+  // Returns JSON object with answer and confidence related to a specific question query.
+  async function fetchAPI(question: string, context: string, sixteenK: boolean) {
+    var modelName = sixteenK ? "gpt-3.5-turbo-16k" : "gpt-3.5-turbo"
+    var prompt = createPrompt(question, context)
+    var answer = ""
+    var confidence = 0
+
+    await axios({
+      method: 'POST',
+      url: 'https://api.openai.com/v1/chat/completions',
+      data: JSON.stringify({
+        "model": modelName,
+        "messages": [
+          {"role": "system", "content": "You are a question answering bot. Answer the question based on the context. Keep the answer short. Only respond with the answer, no other words. Respond \"Unsure about answer\" if not sure about the answer. After your answer, give a confidence rating in your answer separated from the answer with a semicolon. For the confidence, only give a single number, don't say the word \"Confidence\"."},
+          {"role": "user", "content": prompt}
+        ],
+        "temperature": 0,
+        "max_tokens": 100,
+        "top_p": 1,
+        "frequency_penalty": 0.0,
+        "presence_penalty": 0.0,
+      }),
+      headers: {
+        'Authorization': `Bearer ${keys.apiKey}`,
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      }
+    })
+      .then(function (res) {
+        console.log(res)
+        if (res.status == 200) {
+          var response = res.data.choices[0].message.content
+          answer = response.split("; ").slice(0, -1).join("")
+          confidence = parseInt(response.split("; ").slice(-1)[0])
+        } else {
+          answer = "Unsure about answer"
+        }
+      })
+      .catch(function (err) {
+        console.error(err)
+        if (err.response.status == 429) {
+          answer = "Too many requests, please try again in a minute"
+        } else if (err.response.status == 401) {
+          answer = "Invalid API key, please contact Chrome Extension creator."
+        } else if (err.response.status == 500) {
+          answer = "Internal server error, please try again in a minute."
+        } else if (err.response.status == 503) {
+          answer = "Servers overloaded, please try again later."
+        } else {
+          answer = "We're sorry, an error has occured"
+        }
+        confidence = 0
+      });
+
+      return {"answer": answer, "confidence": confidence}
+  }
+
+  
+  // Chunks text, makes calls, and returns answer to user query in JSON object
+  async function getAnswer(question: string, context: string) {
+    var textChunks = chunkText(context)
+    if (textChunks[0] == "Too long") {
+      return {"answer": "Context too long, please shorten it", "confidence": 0}
+    }
+
+    var topAnswer = {"answer": "", "confidence": -1}
+    var sixteenK = textChunks[0].split(" ").length > 2750
+    for (const chunk of textChunks) {
+      // Get each answer and change the top answer if a better one is found
+      var currentAnswer = await fetchAPI(question, chunk, sixteenK)
+      if (topAnswer.confidence < currentAnswer.confidence) {
+        topAnswer = currentAnswer
+      }
+    }
+
+    return topAnswer
+  }
+
+
+    // If the search button was pressed make an axios call to the banana
   // dev server with the question and context, then set the answer to the response
   //
   // After the call, if the answer is still an empty string, set it to "Sorry, no answer found"
@@ -57,51 +160,19 @@ const Popup = () => {
     (document.getElementsByClassName("submit")[0] as HTMLButtonElement).disabled = true;
     (document.getElementsByClassName("submit")[0] as HTMLButtonElement).style.cursor = "not-allowed"
 
-    await axios({
-      method: 'POST',
-      url: 'https://api.banana.dev/start/v4',
-      data: {
-        "apiKey": keys.apiKey,
-        "modelKey": keys.modelKey,
-        "modelInputs": {
-          "question": (document.getElementById("search0") as HTMLInputElement).value,
-          "text": pageText
-        }
-      }
-    })
-      .then(function (res) {
-        console.log(res)
-        if (res.data.modelOutputs) {
-          setAnswer1(res.data.modelOutputs[0].output.answer)
-          setConfidence1(Math.floor(res.data.modelOutputs[0].output.score * 10000) / 100)
-
-          // Highlight the text on the page
-          // Doesn't work, commented out for now
-          // chrome.tabs.query({ active: true, currentWindow: true },
-          //   function (tabs) {
-          //     chrome.tabs.sendMessage(tabs[0].id, { type: "highlight", search: res.data.answer });
-          //   });
-        } else {
-          setAnswer1("Sorry, no answer found")
-        }
-      })
-      .catch(function (err) {
-        console.error(err)
-        if (err.response.status == 429) {
-          setAnswer1("Too many requests, please try again in a minute");
-        } else if (err.response.status == 422) {
-          setAnswer1("Please refresh your webpage and try again");
-        } else {
-          setAnswer1("We're sorry, an error has occured");
-        }
-        setConfidence1(0)
-      });
+    var question = (document.getElementById("search0") as HTMLInputElement).value
+    var topAnswer = await getAnswer(question, pageText)
+    .then((topAnswer) => {
+      setAnswer1(topAnswer.answer)
+      setConfidence1(topAnswer.confidence)
+    });
 
 
     (document.getElementsByClassName("submit")[0] as HTMLButtonElement).disabled = false;
     (document.getElementsByClassName("submit")[0] as HTMLButtonElement).style.cursor = "pointer"
     setLoading(false)
   }
+
 
   async function textBlockSearch() {
     if ((document.getElementById("search1") as HTMLInputElement).value == "") {
@@ -123,38 +194,13 @@ const Popup = () => {
     (document.getElementsByClassName("submit")[0] as HTMLButtonElement).disabled = true;
     (document.getElementsByClassName("submit")[0] as HTMLButtonElement).style.cursor = "not-allowed"
 
-    await axios({
-      method: 'POST',
-      url: 'https://api.banana.dev/start/v4',
-      data: {
-        "apiKey": keys.apiKey,
-        "modelKey": keys.modelKey,
-        "modelInputs": {
-          "question": (document.getElementById("search1") as HTMLInputElement).value,
-          "text": (document.getElementById("textarea") as HTMLInputElement).value
-        }
-      }
-    })
-      .then(function (res) {
-        console.log(res)
-        if (res.data.modelOutputs) {
-          setAnswer2(res.data.modelOutputs[0].output.answer)
-          setConfidence2(Math.floor(res.data.modelOutputs[0].output.score * 10000) / 100)
-        } else {
-          setAnswer2("Sorry, no answer found")
-        }
-      })
-      .catch(function (err) {
-        console.error(err)
-        if (err.response.status == 429) {
-          setAnswer2("Too many requests, please try again in a minute");
-        } else if (err.response.status == 422) {
-          setAnswer2("Please refresh your webpage and try again");
-        } else {
-          setAnswer2("We're sorry, an error has occured");
-        }
-        setConfidence2(0)
-      });
+    var question = (document.getElementById("search1") as HTMLInputElement).value
+    var text = (document.getElementById("textarea") as HTMLInputElement).value
+    var topAnswer = await getAnswer(question, text)
+    .then((topAnswer) => {
+      setAnswer2(topAnswer.answer)
+      setConfidence2(topAnswer.confidence)
+    });
 
     (document.getElementsByClassName("submit")[0] as HTMLButtonElement).disabled = false;
     (document.getElementsByClassName("submit")[0] as HTMLButtonElement).style.cursor = "pointer"
@@ -168,7 +214,7 @@ const Popup = () => {
         return (
           <>
             <form className="form">
-              <label htmlFor="search0">Question</label>
+              <label htmlFor="search0">Question testing testing</label>
               <input type="text" id="search0" className="search" />
               <button type="button" className="submit"
                 onClick={() => tabSearch()}>{loading ? "Loading..." : "Search"}</button>
