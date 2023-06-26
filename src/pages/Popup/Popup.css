@@ -121,13 +121,11 @@ label {
 }
 
 .submit {
-  color: #0ed85b;
   font-weight: 600;
   background-color: white;
   width: 263px;
   padding-top: 0.5em;
   padding-bottom: 0.5em;
-  border: 2px solid #0ed85b;
   border-radius: 999px;
   margin-bottom: 1em;
 }
@@ -137,6 +135,15 @@ label {
   cursor: pointer;
 }
 
+.submit-success {
+  color: #0ed85b;
+  border: 2px solid #0ed85b;
+}
+
+.submit-error {
+  color: #e85137;
+  border: 2px solid #e85137;
+}
 
 hr {
   height: 0.1px;

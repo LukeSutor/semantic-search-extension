@@ -5,7 +5,6 @@ import back from './back.svg'
 import axios from 'axios';
 import "@pages/popup/Popup.css";
 
-// @ts-nocheck
 
 const Popup = () => {
 
@@ -15,9 +14,16 @@ const Popup = () => {
 
   const [pageText, setPageText] = useState("")
 
+  const [contextText, setContextText] = useState("")
+
   const [answer1, setAnswer1] = useState("")
 
   const [answer2, setAnswer2] = useState("")
+
+  const [largePageWarning, setLargePageWarning] = useState(false)
+
+  const [largeContextWarning, setLargeContextWarning] = useState(false)
+
 
   // Make a request to the content script to fetch the current website's text
   // And set the answer state to that recieved text
@@ -30,10 +36,56 @@ const Popup = () => {
       });
   }
 
+
   // Get the website's text when the popup is loaded
   useEffect(() => {
     getText()
   }, [])
+
+
+  function handleChange(event) {
+    setContextText(event.target.value)    
+  }
+
+
+  // Check if there are over 11k words and the request won't work.
+  useEffect(() => {
+    if (pageText.split(" ").length > 11000) {
+      setLargePageWarning(true);
+    } else {
+      setLargePageWarning(false);
+    }
+    if (contextText.split(" ").length > 11000) {
+      setLargeContextWarning(true);
+    } else {
+      setLargeContextWarning(false);
+    }
+  }, [pageText, contextText])
+
+
+  // Change pointer and click effects if pageText or contextText is too long
+  useEffect(() => {
+    if (largePageWarning || largeContextWarning) {
+      (document.getElementsByClassName("submit")[0] as HTMLButtonElement).disabled = true;
+      (document.getElementsByClassName("submit")[0] as HTMLButtonElement).style.cursor = "not-allowed";
+    } else {
+      (document.getElementsByClassName("submit")[0] as HTMLButtonElement).disabled = false;
+      (document.getElementsByClassName("submit")[0] as HTMLButtonElement).style.cursor = "pointer"
+    }
+  }, [largePageWarning, largeContextWarning])
+
+
+  // Gets the button's label based on the current state of the extension
+  function getLabel() {
+    if (loading) {
+      return "Loading..."
+    } else if ((page == 0 && largePageWarning) || (page == 1 && largeContextWarning)) {
+      return "Limit input to 11,000 words"
+    } else {
+      return "Search"
+    }
+  }
+
 
   // Given a question and context, create text to be used in a 
   // request to the OpenAI servers for question answering
@@ -45,7 +97,7 @@ const Popup = () => {
   // Returns JSON object with answer related to a specific question query.
   async function getAnswer(question: string, context: string) {
     var textLength = context.split(" ").length
-    if (textLength > 10000) {
+    if (textLength > 11000) {
       return "Context too long, please shorten it"
     }
     var modelName = textLength > 2000 ? "gpt-3.5-turbo-16k" : "gpt-3.5-turbo"
@@ -75,6 +127,7 @@ const Popup = () => {
       }
     })
       .then(function (res) {
+        console.log(res)
         if (res.status == 200) {
           answer = res.data.choices[0].message.content
         } else {
@@ -102,7 +155,7 @@ const Popup = () => {
   }
 
 
-    // If the search button was pressed make an axios call to the banana
+  // If the search button was pressed make an axios call to the banana
   // dev server with the question and context, then set the answer to the response
   //
   // After the call, if the answer is still an empty string, set it to "Sorry, no answer found"
@@ -124,9 +177,7 @@ const Popup = () => {
 
     var question = (document.getElementById("search0") as HTMLInputElement).value
     await getAnswer(question, pageText)
-    .then((topAnswer) => {
-      setAnswer1(topAnswer)
-    });
+    .then(topAnswer => setAnswer1(topAnswer));
 
 
     (document.getElementsByClassName("submit")[0] as HTMLButtonElement).disabled = false;
@@ -156,11 +207,8 @@ const Popup = () => {
     (document.getElementsByClassName("submit")[0] as HTMLButtonElement).style.cursor = "not-allowed"
 
     var question = (document.getElementById("search1") as HTMLInputElement).value
-    var text = (document.getElementById("textarea") as HTMLInputElement).value
-    await getAnswer(question, text)
-    .then((topAnswer) => {
-      setAnswer2(topAnswer)
-    });
+    await getAnswer(question, contextText)
+    .then(topAnswer => setAnswer2(topAnswer));
 
     (document.getElementsByClassName("submit")[0] as HTMLButtonElement).disabled = false;
     (document.getElementsByClassName("submit")[0] as HTMLButtonElement).style.cursor = "pointer"
@@ -174,10 +222,10 @@ const Popup = () => {
         return (
           <>
             <form className="form">
-              <label htmlFor="search0">Question testing testing</label>
+              <label htmlFor="search0">Question</label>
               <input type="text" id="search0" className="search" />
-              <button type="button" className="submit"
-                onClick={() => tabSearch()}>{loading ? "Loading..." : "Search"}</button>
+              <button type="button" className={largePageWarning ? "submit submit-error" : "submit submit-success"}
+                onClick={() => tabSearch()}>{getLabel()}</button>
             </form>
             {answer1 !== "" &&
               <div>
@@ -195,9 +243,9 @@ const Popup = () => {
               <label htmlFor="search1">Question</label>
               <input type="text" id="search1" className="search" />
               <label htmlFor="textarea">Text To Scan</label>
-              <textarea id="textarea" className="textarea" rows={4} />
-              <button type="button" className="submit"
-                onClick={() => textBlockSearch()}>{loading ? "Loading..." : "Search"}</button>
+              <textarea id="textarea" className="textarea" rows={4} onChange={handleChange}/>
+              <button type="button" className={largeContextWarning ? "submit submit-error" : "submit submit-success"}
+                onClick={() => textBlockSearch()}>{getLabel()}</button>
             </form>
             {answer2 !== "" &&
               <div>
@@ -212,6 +260,7 @@ const Popup = () => {
         break;
     }
   }
+
 
   return (
     <>
@@ -246,9 +295,9 @@ const Popup = () => {
               you want scanned into the "Text to Scan" field, and your question into the "Question" field.</p>
             <br />
             <h2 className="subheader">How it works</h2>
-            <p className="explanation">This extension makes use of an artificial intelligence model trained
-              to answer  questions based on a given context. It makes use of the <a
-                href="https://www.banana.dev/" rel="noreferrer" target="_blank" className="link">banana.dev</a> api to
+            <p className="explanation">This extension makes use of GPT-3.5, an artificial intelligence model trained
+              to do a wide variety of natural language processing tasks. It makes use of the <a
+                href="https://openai.com/blog/openai-api" rel="noreferrer" target="_blank" className="link">OpenAI API</a> to
               perform inference on the model and process the search queries.
             </p>
           </div>
@@ -257,5 +306,6 @@ const Popup = () => {
     </>
   );
 };
+
 
 export default Popup;
