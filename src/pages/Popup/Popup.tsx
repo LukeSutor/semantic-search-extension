@@ -50,12 +50,12 @@ const Popup = () => {
 
   // Check if there are over 11k words and the request won't work.
   useEffect(() => {
-    if (pageText.split(" ").length > 11000) {
+    if (pageText?.split(" ")?.length > 11000) {
       setLargePageWarning(true);
     } else {
       setLargePageWarning(false);
     }
-    if (contextText.split(" ").length > 11000) {
+    if (contextText?.split(" ")?.length > 11000) {
       setLargeContextWarning(true);
     } else {
       setLargeContextWarning(false);
