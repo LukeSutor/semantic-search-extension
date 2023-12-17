@@ -90,12 +90,13 @@ const Popup = () => {
   // Given a question and context, create text to be used in a 
   // request to the OpenAI servers for question answering
   function createPrompt(question: string, text: string) {
-    return "Context: " + text + "\n\nQuestion: " + question
+    return "Question: " + question + "\n\nContext: " + text
   }
 
 
   // Returns JSON object with answer related to a specific question query.
   async function getAnswer(question: string, context: string) {
+    console.log("Getting answer for question: " + question)
     var textLength = context.split(" ").length
     if (textLength > 11000) {
       return "Context too long, please shorten it"
@@ -105,61 +106,41 @@ const Popup = () => {
     var prompt = createPrompt(question, context)
     var answer = ""
 
-    await axios({
-      method: 'POST',
-      url: 'https://api.openai.com/v1/chat/completions',
-      data: JSON.stringify({
-        "model": modelName,
-        "messages": [
-          {"role": "system", "content": "You are a question answering bot. Answer the question based on the context. Keep the answer short. Only respond with the answer, no other words. Respond \"Unsure about answer\" if not sure about the answer."},
-          {"role": "user", "content": prompt}
-        ],
-        "temperature": 0,
-        "max_tokens": 100,
-        "top_p": 1,
-        "frequency_penalty": 0.0,
-        "presence_penalty": 0.0,
-      }),
-      headers: {
-        'Authorization': `Bearer ${keys.apiKey}`,
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      }
-    })
-      .then(function (res) {
-        console.log(res)
-        if (res.status == 200) {
-          answer = res.data.choices[0].message.content
-        } else {
-          answer = "Unsure about answer"
-        }
-      })
-      .catch(function (err) {
-        console.error(err)
-        if (err.response.status == 400) {
-          answer = "Context too long, please shorten it"
-        } else if (err.response.status == 401) {
-          answer = "Invalid API key, please contact Chrome Extension creator."
-        } else if (err.response.status == 429) {
-          answer = "Too many requests, please try again in a minute"
-        } else if (err.response.status == 500) {
-          answer = "Internal server error, please try again in a minute."
-        } else if (err.response.status == 503) {
-          answer = "Servers overloaded, please try again later."
-        } else {
-          answer = "We're sorry, an unexpected error has occured"
-        }
-      });
+    // Define the type for your request body
+    interface WorkerRequestBody {
+      modelName: string;
+      prompt: string;
+    }
 
-      return answer
+    // Create an instance of the request body
+    const requestBody: WorkerRequestBody = {
+      modelName: modelName,
+      prompt: prompt,
+    };
+
+    console.log("Request body: " + JSON.stringify(requestBody))
+
+    // Set the URL of your Cloudflare Worker
+    const workerURL: string = 'https://semantic-search.lukesutor.workers.dev/';
+
+    // Make a POST request to the Cloudflare Worker
+    await axios.post(workerURL, requestBody)
+      .then(response => {
+        console.log(response.data.answer);
+        answer = response.data.answer;
+      })
+      .catch(error => {
+        answer = "Sorry, no answer found";
+        // Handle any error here
+        console.error('Error:', error.response?.data || error.message);
+    });
+
+    console.log("Answer: " + answer)
+
+    return answer
   }
 
 
-  // If the search button was pressed make an axios call to the banana
-  // dev server with the question and context, then set the answer to the response
-  //
-  // After the call, if the answer is still an empty string, set it to "Sorry, no answer found"
-  //
   // There are different functions to get the answer for each tab, it can be combined into one function
   // but having two functions makes the code more readable and easy to work with.
   async function tabSearch() {
