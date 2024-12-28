@@ -1,5 +1,5 @@
 import React, { useState, useEffect }  from "react";
-import keys from '../../../keys.json'
+import { isWithinTokenLimit } from "gpt-tokenizer/encoding/o200k_base";
 import logo from "@assets/img/icon-34.png";
 import back from './back.svg'
 import axios from 'axios';
@@ -7,6 +7,7 @@ import "@pages/popup/Popup.css";
 
 
 const Popup = () => {
+  const TOKEN_LIMIT = 120000;
 
   const [page, setPage] = useState(0)
 
@@ -14,11 +15,7 @@ const Popup = () => {
 
   const [pageText, setPageText] = useState("")
 
-  const [contextText, setContextText] = useState("")
-
-  const [answer1, setAnswer1] = useState("")
-
-  const [answer2, setAnswer2] = useState("")
+  const [answer, setAnswer] = useState("")
 
   const [largePageWarning, setLargePageWarning] = useState(false)
 
@@ -42,28 +39,17 @@ const Popup = () => {
     getText()
   }, [])
 
-
-  function handleChange(event) {
-    setContextText(event.target.value)    
-  }
-
-
-  // Check if there are over 11k words and the request won't work.
+  // Check if there are over 120k tokens and the request won't work.
   useEffect(() => {
-    if (pageText?.split(" ")?.length > 11000) {
+    if (!isWithinTokenLimit(pageText, TOKEN_LIMIT)) {
       setLargePageWarning(true);
     } else {
       setLargePageWarning(false);
     }
-    if (contextText?.split(" ")?.length > 11000) {
-      setLargeContextWarning(true);
-    } else {
-      setLargeContextWarning(false);
-    }
-  }, [pageText, contextText])
+  }, [pageText])
 
 
-  // Change pointer and click effects if pageText or contextText is too long
+  // Change pointer and click effects if pageText is too long
   useEffect(() => {
     if (largePageWarning || largeContextWarning) {
       (document.getElementsByClassName("submit")[0] as HTMLButtonElement).disabled = true;
@@ -79,8 +65,8 @@ const Popup = () => {
   function getLabel() {
     if (loading) {
       return "Loading..."
-    } else if ((page == 0 && largePageWarning) || (page == 1 && largeContextWarning)) {
-      return "Limit input to 11,000 words"
+    } else if (page == 0 && largePageWarning) {
+      return "Error, too many words on webpage"
     } else {
       return "Search"
     }
@@ -152,112 +138,43 @@ const Popup = () => {
     }
 
     setLoading(true)
-    setAnswer1("");
+    setAnswer("");
     (document.getElementsByClassName("submit")[0] as HTMLButtonElement).disabled = true;
     (document.getElementsByClassName("submit")[0] as HTMLButtonElement).style.cursor = "not-allowed"
 
     var question = (document.getElementById("search0") as HTMLInputElement).value
     await getAnswer(question, pageText)
-    .then(topAnswer => setAnswer1(topAnswer));
+    .then(topAnswer => setAnswer(topAnswer));
 
 
     (document.getElementsByClassName("submit")[0] as HTMLButtonElement).disabled = false;
     (document.getElementsByClassName("submit")[0] as HTMLButtonElement).style.cursor = "pointer"
     setLoading(false)
-  }
-
-
-  async function textBlockSearch() {
-    if ((document.getElementById("search1") as HTMLInputElement).value == "") {
-      (document.getElementById("search1") as HTMLInputElement).placeholder = "Enter question"
-      return
-    } else {
-      (document.getElementById("search1") as HTMLInputElement).placeholder = ""
-    }
-
-    if ((document.getElementById("textarea") as HTMLInputElement).value == "") {
-      (document.getElementById("textarea") as HTMLInputElement).placeholder = "Enter text to scan"
-      return
-    } else {
-      (document.getElementById("textarea") as HTMLInputElement).placeholder = ""
-    }
-
-    setLoading(true)
-    setAnswer2("");
-    (document.getElementsByClassName("submit")[0] as HTMLButtonElement).disabled = true;
-    (document.getElementsByClassName("submit")[0] as HTMLButtonElement).style.cursor = "not-allowed"
-
-    var question = (document.getElementById("search1") as HTMLInputElement).value
-    await getAnswer(question, contextText)
-    .then(topAnswer => setAnswer2(topAnswer));
-
-    (document.getElementsByClassName("submit")[0] as HTMLButtonElement).disabled = false;
-    (document.getElementsByClassName("submit")[0] as HTMLButtonElement).style.cursor = "pointer"
-    setLoading(false)
-  }
-
-
-  function renderSwitch() {
-    switch (page) {
-      case 0:
-        return (
-          <>
-            <form className="form">
-              <label htmlFor="search0">Question</label>
-              <input type="text" id="search0" className="search" />
-              <button type="button" className={largePageWarning ? "submit submit-error" : "submit submit-success"}
-                onClick={() => tabSearch()}>{getLabel()}</button>
-            </form>
-            {answer1 !== "" &&
-              <div>
-                <hr />
-                <p className="answer">{answer1}</p>
-              </div>
-            }
-          </>
-        );
-
-      case 1:
-        return (
-          <>
-            <form className="form">
-              <label htmlFor="search1">Question</label>
-              <input type="text" id="search1" className="search" />
-              <label htmlFor="textarea">Text To Scan</label>
-              <textarea id="textarea" className="textarea" rows={4} onChange={handleChange}/>
-              <button type="button" className={largeContextWarning ? "submit submit-error" : "submit submit-success"}
-                onClick={() => textBlockSearch()}>{getLabel()}</button>
-            </form>
-            {answer2 !== "" &&
-              <div>
-                <hr />
-                <p className="answer">{answer2}</p>
-              </div>
-            }
-          </>
-        );
-
-      default:
-        break;
-    }
   }
 
 
   return (
     <>
-      {page !== 2 ?
+      {page === 0 ?
         <>
           <div className="header">
             <img src={logo} alt="" className="logo" />
-            <button type="button" className="help-button" onClick={() => setPage(2)}>?
+            <button type="button" className="help-button" onClick={() => setPage(1)}>?
             </button>
           </div>
-          <div className="button-container">
-            <button className={`button ${page === 0 ? "button-active" : "button-inactive"}`} onClick={() => setPage(0)}>Scan Webpage</button>
-            <button className={`button ${page === 1 ? "button-active" : "button-inactive"}`} onClick={() => setPage(1)}>Manually Enter</button>
-          </div>
           <div className="popup-content">
-            {renderSwitch()}
+            <form className="form" onSubmit={() => tabSearch()}>
+              <label htmlFor="search0">Question</label>
+              <input type="text" id="search0" className="search" />
+              <button type="submit" className={largePageWarning ? "submit submit-error" : "submit submit-success"}
+                onClick={() => tabSearch()}>{getLabel()}</button>
+            </form>
+            {answer !== "" &&
+              <div>
+                <hr />
+                <p className="answer">{answer}</p>
+              </div>
+            }
           </div>
         </>
         :
@@ -270,13 +187,10 @@ const Popup = () => {
           </div>
           <div className="content">
             <h2 className="subheader">How to search</h2>
-            <p className="explanation">This extension has two tabs, "Scan Webpage" and "Manually Enter." To parse the text of your
-              current tab to answer your question, use the "Scan Webpage" tab and simply ask the question you want answered. If you
-              want to parse a specific block of text for an answer, you can use the "Manually Enter" tab, by pasting the text block
-              you want scanned into the "Text to Scan" field, and your question into the "Question" field.</p>
+            <p className="explanation">To search your current webpage for answers, simply input your question into the text box and hit search. If your current webpage has too much text, it may be impossible to search due to the limited context size of the AI model.</p>
             <br />
             <h2 className="subheader">How it works</h2>
-            <p className="explanation">This extension makes use of GPT-3.5, an artificial intelligence model trained
+            <p className="explanation">This extension makes use of GPT-4o-mini, an AI model trained by OpenAI
               to do a wide variety of natural language processing tasks. It makes use of the <a
                 href="https://openai.com/blog/openai-api" rel="noreferrer" target="_blank" className="link">OpenAI API</a> to
               perform inference on the model and process the search queries.
