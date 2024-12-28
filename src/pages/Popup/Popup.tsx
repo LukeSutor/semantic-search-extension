@@ -8,19 +8,23 @@ import "@pages/popup/Popup.css";
 
 const Popup = () => {
   const TOKEN_LIMIT = 120000;
+  const MODEL_NAME = "gpt-4o-mini-2024-07-18";
 
   const [page, setPage] = useState(0)
-
   const [loading, setLoading] = useState(false)
-
   const [pageText, setPageText] = useState("")
-
-  const [answer, setAnswer] = useState("")
-
+  const [result, setResult] = useState({answer: "", confidence: 0})
   const [largePageWarning, setLargePageWarning] = useState(false)
 
-  const [largeContextWarning, setLargeContextWarning] = useState(false)
-
+  // Define interfaces
+  interface WorkerRequestBody {
+    modelName: string;
+    prompt: string;
+  }
+  interface WorkerResponse {
+    answer: string,
+    confidence: number
+  }
 
   // Make a request to the content script to fetch the current website's text
   // And set the answer state to that recieved text
@@ -51,14 +55,14 @@ const Popup = () => {
 
   // Change pointer and click effects if pageText is too long
   useEffect(() => {
-    if (largePageWarning || largeContextWarning) {
+    if (largePageWarning) {
       (document.getElementsByClassName("submit")[0] as HTMLButtonElement).disabled = true;
       (document.getElementsByClassName("submit")[0] as HTMLButtonElement).style.cursor = "not-allowed";
     } else {
       (document.getElementsByClassName("submit")[0] as HTMLButtonElement).disabled = false;
       (document.getElementsByClassName("submit")[0] as HTMLButtonElement).style.cursor = "pointer"
     }
-  }, [largePageWarning, largeContextWarning])
+  }, [largePageWarning])
 
 
   // Gets the button's label based on the current state of the extension
@@ -72,80 +76,51 @@ const Popup = () => {
     }
   }
 
-
-  // Given a question and context, create text to be used in a 
-  // request to the OpenAI servers for question answering
-  function createPrompt(question: string, text: string) {
-    return "Question: " + question + "\n\nContext: " + text
-  }
-
-
   // Returns JSON object with answer related to a specific question query.
-  async function getAnswer(question: string, context: string) {
+  async function getResult(question: string, context: string): Promise<WorkerResponse> {
     console.log("Getting answer for question: " + question)
-    var textLength = context.split(" ").length
-    if (textLength > 11000) {
-      return "Context too long, please shorten it"
-    }
-    var modelName = textLength > 2000 ? "gpt-3.5-turbo-16k" : "gpt-3.5-turbo"
+    
+    var prompt = `Question: ${question}\n\nContext: ${context}`;
+    var result: WorkerResponse;
 
-    var prompt = createPrompt(question, context)
-    var answer = ""
-
-    // Define the type for your request body
-    interface WorkerRequestBody {
-      modelName: string;
-      prompt: string;
-    }
-
-    // Create an instance of the request body
     const requestBody: WorkerRequestBody = {
-      modelName: modelName,
+      modelName: MODEL_NAME,
       prompt: prompt,
     };
 
-    console.log("Request body: " + JSON.stringify(requestBody))
-
-    // Set the URL of your Cloudflare Worker
     const workerURL: string = 'https://semantic-search.lukesutor.workers.dev/';
 
     // Make a POST request to the Cloudflare Worker
     await axios.post(workerURL, requestBody)
       .then(response => {
-        console.log(response.data.answer);
-        answer = response.data.answer;
+        console.log(response.data);
+        result = response.data;
       })
       .catch(error => {
-        answer = "Sorry, no answer found";
+        result = {answer: "Unsure about answer.", confidence: 0};
         // Handle any error here
         console.error('Error:', error.response?.data || error.message);
     });
-
-    console.log("Answer: " + answer)
-
-    return answer
+    
+    return result
   }
 
-
-  // There are different functions to get the answer for each tab, it can be combined into one function
-  // but having two functions makes the code more readable and easy to work with.
   async function tabSearch() {
-    if ((document.getElementById("search0") as HTMLInputElement).value== "") {
-      (document.getElementById("search0") as HTMLInputElement).placeholder = "Enter question"
+    if ((document.getElementById("search") as HTMLInputElement).value== "") {
+      (document.getElementById("search") as HTMLInputElement).placeholder = "Enter question"
       return
     } else {
-      (document.getElementById("search0") as HTMLInputElement).placeholder = ""
+      (document.getElementById("search") as HTMLInputElement).placeholder = ""
     }
 
-    setLoading(true)
-    setAnswer("");
+    setLoading(true);
+    setResult({answer: "", confidence: 0});
     (document.getElementsByClassName("submit")[0] as HTMLButtonElement).disabled = true;
     (document.getElementsByClassName("submit")[0] as HTMLButtonElement).style.cursor = "not-allowed"
 
-    var question = (document.getElementById("search0") as HTMLInputElement).value
-    await getAnswer(question, pageText)
-    .then(topAnswer => setAnswer(topAnswer));
-
+    var question = (document.getElementById("search") as HTMLInputElement).value
+    await getResult(question, pageText)
+      .then(result => setResult(result));
 
     (document.getElementsByClassName("submit")[0] as HTMLButtonElement).disabled = false;
     (document.getElementsByClassName("submit")[0] as HTMLButtonElement).style.cursor = "pointer"
@@ -164,15 +139,16 @@ const Popup = () => {
           </div>
           <div className="popup-content">
             <form className="form" onSubmit={() => tabSearch()}>
-              <label htmlFor="search0">Question</label>
-              <input type="text" id="search0" className="search" />
+              <label htmlFor="search">Question</label>
+              <input type="text" id="search" className="search" />
               <button type="submit" className={largePageWarning ? "submit submit-error" : "submit submit-success"}
                 onClick={() => tabSearch()}>{getLabel()}</button>
             </form>
-            {answer !== "" &&
+            {result.answer !== "" &&
               <div>
                 <hr />
-                <p className="answer">{answer}</p>
+                <p className="confidence">Confidence: {result.confidence}%</p>
+                <p className="answer">{result.answer}</p>
               </div>
             }
           </div>
