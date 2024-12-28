@@ -22,3 +22,6 @@ keys.json
 
 # Packaged extensions
 *.zip
+
+# Chrome webstore images
+webstore_images/
